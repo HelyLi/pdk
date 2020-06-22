@@ -1,4 +1,3 @@
-import { lstat } from "fs";
 
 enum CT {
     //错误牌型
@@ -94,8 +93,8 @@ export class pdklogic {
         return cardIndex
     }
 
-    static findAllSameCardByIndex(cardIndex: lcardTmp[][]) {
-        let rtn = []
+    static findAllSameCardByIndex(cardIndex: lcardTmp[][]):lcardTmp[][][] {
+        let rtn:lcardTmp[][][] = []
         for (let i = 3; i < cardIndex.length; i++) {
             const v = cardIndex[i];
             if (v) {
@@ -122,11 +121,9 @@ export class pdklogic {
         return rtn
     }
 
-    static sortBySame(cards: lcardTmp[], cardType?: number) {
+    static sortBySame(cards: lcardTmp[], cardType?: number) :lcardTmp[]{
         let cardIndex = this.dataToIndex(cards)
-        console.log(cardIndex)
         let sameCard = this.findAllSameCardByIndex(cardIndex)
-        console.log(sameCard)
         if (cardType == CT.AirPlane) {
             let rtn = []
             let seq = 2
@@ -907,7 +904,7 @@ export class pdklogic {
                     return [v]
                 }
             }
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard)
         } else if (toCardType == CT.Double) {
             let handCardIndex = this.dataToIndex(localHandCard)
             let cld = localCompare[0].l
@@ -923,13 +920,13 @@ export class pdklogic {
                     return [].concat(v.slice(0, 2))
                 }
             }
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard)
         } else if (toCardType == CT.DoubleSeq) {
             let rtn = this.findOneDoubleSeq(localHandCard, localCompare)
             if (rtn && rtn.length > 0) {
                 return rtn
             }
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard)
         } else if (toCardType == CT.Three) {
             if (localHandCard.length >= localCompare.length) {
                 let rtn = this.findOneThree(localHandCard, localCompare)
@@ -937,7 +934,7 @@ export class pdklogic {
                     return rtn
                 }
             }
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard)
         } else if (toCardType == CT.FourAThree) {
             if (localHandCard.length >= localCompare.length) {
                 let rtn = this.findOneFourThree(localHandCard, localCompare)
@@ -945,7 +942,7 @@ export class pdklogic {
                     return rtn
                 }
             }
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard)
         } else if (toCardType == CT.ShunZi) {
             if (localHandCard.length >= localCompare.length) {
                 let rtn = this.findOneShunZi(localHandCard, localCompare)
@@ -953,7 +950,7 @@ export class pdklogic {
                     return rtn
                 }
             }
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard)
         } else if (toCardType == CT.AirPlane) {
             if (localHandCard.length >= localCompare.length) {
                 let rtn = this.findOnePlane(localHandCard, localCompare)
@@ -961,9 +958,9 @@ export class pdklogic {
                     return rtn
                 }
             }
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard)
         } else if (toCardType == CT.Bomb) {
-            return this.findOneBomb(localHandCard, localCompare, true)
+            return this.findOneBomb(localHandCard, localCompare)
         }
     }
 
@@ -1483,7 +1480,6 @@ export class pdklogic {
     static getOneAICard(localHandCard: lcardTmp[], selectCard: lcardTmp[], findFit: boolean) {
         let selectLen = selectCard.length
         let handCardLen = localHandCard.length
-
         if (selectLen == 1) {
             return selectCard
         }
@@ -1513,15 +1509,15 @@ export class pdklogic {
 
         if (selectLen == 3) {
             //连对
-            if (selSameCard[2] && selSameCard[1] && Math.abs(selSameCard[2][0].l - selSameCard[1][0].l) == 1) {
+            if (selSameCard[2] && selSameCard[1] && Math.abs(selSameCard[2][0][0].l - selSameCard[1][0][0].l) == 1) {
                 let rtn = []
                 rtn = rtn.concat(selectCard)
                 let handCardIndex = this.dataToIndex(localHandCard)
 
-                if (handCardIndex[selSameCard[1][0].l]) {
-                    for (let i = 0; i < handCardIndex[selSameCard[1][0].l].length; i++) {
-                        const v = handCardIndex[selSameCard[1][0].l][i];
-                        if (v.o != selSameCard[1][0].o) {
+                if (handCardIndex[selSameCard[1][0][0].l]) {
+                    for (let i = 0; i < handCardIndex[selSameCard[1][0][0].l].length; i++) {
+                        const v = handCardIndex[selSameCard[1][0][0].l][i];
+                        if (v.o != selSameCard[1][0][0].o) {
                             rtn.push(v)
                             break
                         }
