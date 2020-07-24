@@ -22,9 +22,40 @@ var CT;
     //炸弹（4个相同或者AAA ）
     CT[CT["Bomb"] = 8] = "Bomb";
 })(CT || (CT = {}));
+/**
+ * 不拆炸弹
+ */
 var pdklogic = /** @class */ (function () {
     function pdklogic() {
     }
+    // static bytesToLCard(cardBytes: number[], sort: boolean = true, desc: boolean = false): lcardTmp[] {
+    //     let cards = []
+    //     for (let i = 0; i < cardBytes.length; i++) {
+    //         const v = cardBytes[i];
+    //         if (v) {
+    //             let lc: lcardTmp = { o: 0, r: 0, l: 0, s: 0 };
+    //             lc.o = v
+    //             lc.r = v
+    //             lc.l = this.logicData(v)
+    //             cards.push(lc)
+    //         }
+    //     }
+    //     if (sort) {
+    //         if (desc) {
+    //             this.sortByLogicDataDesc(cards)
+    //         } else {
+    //             this.sortByLogicData(cards)
+    //         }
+    //     }
+    //     return cards
+    // }
+    // static logicData(card: number): number {
+    //     let ld = card & 0x0F
+    //     if (ld == 1 || ld == 2) {
+    //         ld += 13
+    //     }
+    //     return ld
+    // }
     pdklogic.bytesToLCard = function (cardBytes, sort, desc) {
         if (sort === void 0) { sort = true; }
         if (desc === void 0) { desc = false; }
@@ -34,8 +65,8 @@ var pdklogic = /** @class */ (function () {
             if (v) {
                 var lc = { o: 0, r: 0, l: 0, s: 0 };
                 lc.o = v;
-                lc.r = v;
-                lc.l = this.logicData(v);
+                lc.r = this.replaceData(v);
+                lc.l = v & 0x0F;
                 cards.push(lc);
             }
         }
@@ -49,12 +80,13 @@ var pdklogic = /** @class */ (function () {
         }
         return cards;
     };
-    pdklogic.logicData = function (card) {
-        var ld = card & 0x0F;
-        if (ld == 1 || ld == 2) {
-            ld += 13;
+    pdklogic.replaceData = function (card) {
+        var rd = card & 0x0F;
+        if (rd == 14 || rd == 15) {
+            rd -= 13;
         }
-        return ld;
+        rd += card & 0xF0;
+        return rd;
     };
     pdklogic.sortByLogicData = function (cards) {
         cards.sort(function (a, b) {
@@ -117,9 +149,7 @@ var pdklogic = /** @class */ (function () {
     };
     pdklogic.sortBySame = function (cards, cardType) {
         var cardIndex = this.dataToIndex(cards);
-        console.log(cardIndex);
         var sameCard = this.findAllSameCardByIndex(cardIndex);
-        console.log(sameCard);
         if (cardType == CT.AirPlane) {
             var rtn = [];
             var seq = 2;
@@ -212,7 +242,7 @@ var pdklogic = /** @class */ (function () {
     // 是否连对 传入本地结构
     pdklogic.isDoubleSeq = function (cards) {
         var cardLen = cards.length;
-        if (cardLen < 4 || cardLen % 2 != 2) {
+        if (cardLen < 4 || cardLen % 2 != 0) {
             return false;
         }
         var lastCard = cards[0].l - 1;
@@ -260,7 +290,7 @@ var pdklogic = /** @class */ (function () {
         if (!last && cardLen < 10) {
             return false;
         }
-        if (!last && cardLen % 5 != 5) {
+        if (!last && cardLen % 5 != 0) {
             return false;
         }
         var remain = cardLen;
@@ -300,28 +330,31 @@ var pdklogic = /** @class */ (function () {
         }
         threeLen = lastThreeMax * 3;
         remain = cardLen - threeLen;
+        console.log("threeLen:", threeLen, ",remain:", remain);
         if (!last) {
             if (remain / 2 == lastThreeMax) {
                 return true;
             }
             else {
-                var fit = false;
-                var tMax = lastThreeMax;
-                var lr = remain;
-                var lbreak = false;
-                do {
-                    lr -= 3;
-                    tMax -= 1;
-                    if (tMax < 2) {
-                        fit = false;
-                        lbreak = false;
-                    }
-                    if (lr / 2 == tMax) {
-                        fit = true;
-                        lbreak = true;
-                    }
-                } while (!lbreak);
-                return fit;
+                if (lastThreeMax > 2) {
+                    var fit = false;
+                    var tMax = lastThreeMax;
+                    var lr = remain;
+                    var lbreak = true;
+                    do {
+                        lr += 3;
+                        tMax -= 1;
+                        if (tMax < 2) {
+                            fit = false;
+                            lbreak = false;
+                        }
+                        if (lr / 2 == tMax) {
+                            fit = true;
+                            lbreak = false;
+                        }
+                    } while (lbreak);
+                    return fit;
+                }
             }
         }
         else {
@@ -342,7 +375,6 @@ var pdklogic = /** @class */ (function () {
             return false;
         }
         return (cards[0].l == cards[1].l && cards[0].l == cards[2].l && cards[0].l == cards[3].l);
-        return;
     };
     pdklogic.isBomb = function (cards) {
         var cardLen = cards.length;
@@ -452,7 +484,7 @@ var pdklogic = /** @class */ (function () {
         }
         else {
             minCld = 2;
-            compareSeq = localCompare.length / 2;
+            compareSeq = Math.floor(localHandCard.length / 2);
             any = true;
         }
         var handCardIndex = this.dataToIndex(localHandCard);
@@ -484,6 +516,7 @@ var pdklogic = /** @class */ (function () {
                                     return r;
                                 }
                             }
+                            break;
                         }
                     }
                     else {
@@ -496,6 +529,7 @@ var pdklogic = /** @class */ (function () {
                                 return r;
                             }
                         }
+                        break;
                     }
                 }
             }
@@ -539,6 +573,7 @@ var pdklogic = /** @class */ (function () {
                                 return r;
                             }
                         }
+                        break;
                     }
                 }
             }
@@ -661,7 +696,7 @@ var pdklogic = /** @class */ (function () {
             return null;
         }
         var compareLen = 5;
-        var minCld = 0;
+        var minCld = 2;
         if (localCompare) {
             minCld = localCompare[0].l;
             compareLen = localCompare.length;
@@ -670,7 +705,8 @@ var pdklogic = /** @class */ (function () {
             minCld = 2;
             this.sortByLogicData(localHandCard);
             compareLen = Math.max(5, Math.abs(localHandCard[localHandCard.length - 1].l - localHandCard[0].l) + 1);
-            minCld = localHandCard[0].l;
+            minCld = localHandCard[0].l - 1;
+            console.log("minCld:", minCld, ",compareLen:", compareLen, ",minCld:", minCld);
         }
         var handCardIndex = this.dataToIndex(localHandCard);
         var lastLd = minCld;
@@ -780,6 +816,7 @@ var pdklogic = /** @class */ (function () {
             threeLen = threeMax;
             singleCnt = Math.min(localHandCard.length - threeMax * 3, threeMax * 2);
             compareLen = threeLen * 3 + singleCnt;
+            console.log("threeLen:", threeLen, ",singleCnt:", singleCnt, ",compareLen:", compareLen);
         }
         var rtn = [];
         var handCardIndex = this.dataToIndex(localHandCard);
@@ -794,7 +831,7 @@ var pdklogic = /** @class */ (function () {
             }
             if (v && v.length >= 3) {
                 lastLd = i;
-                for (var j = 0; j < handCardIndex.length; j++) {
+                for (var j = i + 1; j < handCardIndex.length; j++) {
                     var v_4 = handCardIndex[j];
                     if (v_4 && v_4.length >= 3) {
                         if (lastLd + 1 == j) {
@@ -832,7 +869,27 @@ var pdklogic = /** @class */ (function () {
         if (found && singleCnt > 0) {
             for (var i = 0; i < handCardIndex.length; i++) {
                 var v = handCardIndex[i];
-                if (v && v.length > 1) {
+                if (v && v.length == 2) {
+                    var valid = true;
+                    if (i >= minL && i <= maxL) {
+                        valid = false;
+                    }
+                    if (valid) {
+                        var minus = Math.min(singleCnt, handCardIndex[i].length);
+                        console.log("minus:", minus, ",singleCnt:", singleCnt);
+                        rtn = rtn.concat(v.slice(0, minus));
+                        singleCnt -= minus;
+                        if (singleCnt == 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (found && singleCnt > 0) {
+            for (var i = 0; i < handCardIndex.length; i++) {
+                var v = handCardIndex[i];
+                if (v && v.length == 3) {
                     var valid = true;
                     if (i >= minL && i <= maxL) {
                         valid = false;
@@ -973,6 +1030,141 @@ var pdklogic = /** @class */ (function () {
             return this.findOneBomb(localHandCard, localCompare);
         }
     };
+    pdklogic.findFirstTipCard = function (localHandCard, nextRemainOne) {
+        if (nextRemainOne === void 0) { nextRemainOne = false; }
+        var handCardIndex = this.dataToIndex(localHandCard);
+        //去除炸弹
+        var ret = [];
+        for (var i = handCardIndex.length - 1; i >= 3; i--) {
+            var v = handCardIndex[i];
+            if (v && v.length == 4) {
+                var rtn = [].concat(v);
+                ret.push(rtn);
+                this.deleteRtn(localHandCard, rtn);
+            }
+        }
+        var cardType = this.getCardType(localHandCard, true);
+        console.log("传入牌型：", CT[cardType]);
+        if (cardType > CT.Error) {
+            if (ret.length == 0) { //没有炸弹
+                var rtn = [].concat(localHandCard);
+                ret.push(rtn);
+            }
+            return ret;
+        }
+        //去除飞机
+        var plane = this.findOnePlane(localHandCard);
+        while (plane != null) {
+            ret.push(plane);
+            plane = this.findOnePlane(localHandCard, plane);
+        }
+        //去除连对
+        var seq = this.findFirstTipDoubleSeq(localHandCard);
+        ret = ret.concat(seq);
+        //去除三张
+        var three = this.findAllThree(localHandCard);
+        ret = ret.concat(three);
+        //去除顺子
+        var shunZi = this.findFirstTipShunZi(localHandCard);
+        ret = ret.concat(shunZi);
+        //去掉对子
+        var double = this.findAllDouble(localHandCard);
+        ret = ret.concat(double);
+        var single = this.findAllSingle(localHandCard, [{ o: 0, r: 0, l: 2, s: 0 }], nextRemainOne);
+        ret = ret.concat(single);
+        return ret;
+    };
+    pdklogic.findFirstTipDoubleSeq = function (localHandCard) {
+        var ret = [];
+        var localHandCardT = this.clone(localHandCard);
+        var seq = this.findOneDoubleSeq(localHandCardT);
+        while (seq) {
+            this.deleteRtn(localHandCardT, seq);
+            ret.push(seq);
+            seq = this.findOneDoubleSeq(localHandCardT);
+        }
+        return ret;
+    };
+    pdklogic.findFirstTipShunZi = function (localHandCard) {
+        var allret = [];
+        for (var length_1 = Math.min(11, localHandCard.length); length_1 >= 5; length_1--) {
+            var ret = [];
+            var localHandCardT = this.clone(localHandCard);
+            var localCompare = [];
+            for (var i = 0; i < length_1; i++) {
+                localCompare.push({ o: 0, r: 0, l: 2, s: 0 });
+            }
+            var rtn = this.findOneShunZi(localHandCardT, localCompare);
+            var size = localHandCardT.length - length_1;
+            console.log(rtn);
+            console.log("size:", size);
+            while (rtn) {
+                this.deleteRtn(localHandCardT, rtn);
+                ret.push(rtn);
+                for (var i = size; i >= 5; i--) {
+                    localCompare = [];
+                    for (var j = 0; j < i; j++) {
+                        localCompare.push({ o: 0, r: 0, l: 2, s: 0 });
+                    }
+                    var rtn_1 = this.findOneShunZi(localHandCardT, localCompare);
+                    if (rtn_1) {
+                        ret.push(rtn_1);
+                        break;
+                    }
+                }
+                rtn = null;
+            }
+            if (ret.length == 1 && allret.length == 0) {
+                allret = allret.concat(ret);
+            }
+            if (ret.length == 2) {
+                allret = allret.concat(ret);
+                return allret;
+            }
+        }
+    };
+    pdklogic.deleteRtn = function (localHandCard, rtn) {
+        var start = (new Date()).valueOf();
+        for (var i = 0; i < rtn.length; i++) {
+            var d = rtn[i];
+            if (d) {
+                for (var j = 0; j < localHandCard.length; j++) {
+                    var v = localHandCard[j];
+                    if (v && v.o === d.o) {
+                        localHandCard.splice(j, 1);
+                        break;
+                    }
+                }
+            }
+        }
+        var end = (new Date()).valueOf();
+        console.log("end-start:", end - start);
+    };
+    // static deleteRtn1(localHandCard: lcardTmp[], rtn: lcardTmp[]){
+    //     let start = (new Date()).valueOf()
+    //     for (let i = 0; i < localHandCard.length; i++) {
+    //         const d = localHandCard[i];
+    //         if (d) {
+    //             for (let j = 0; j < rtn.length; j++) {
+    //                 const v = rtn[j];
+    //                 if (v && v.o === d.o) {
+    //                     localHandCard.splice(j, 1)
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     let end = (new Date()).valueOf()
+    //     console.log("end-start:", end - start)
+    // }
+    //牌型由飞机->连对->三张->龙->对子->单张
+    pdklogic.findLastTipCard = function (localHandCard, localCompare, nextRemainOne) {
+        if (nextRemainOne === void 0) { nextRemainOne = false; }
+        var cardType = this.getCardType(localCompare);
+        //飞机
+        if (cardType == CT.AirPlane) {
+        }
+        //连对
+    };
     /**************************************** */
     //获取提示牌
     pdklogic.findAllTipCard = function (localHandCard, nextRemainOne) {
@@ -1066,7 +1258,10 @@ var pdklogic = /** @class */ (function () {
     };
     pdklogic.findAllDouble = function (localHandCard, localCompare) {
         var handCardIndex = this.dataToIndex(localHandCard);
-        var cld = localCompare[0].l;
+        var cld = 2;
+        if (localCompare) {
+            cld = localCompare[0].l;
+        }
         var ret = [];
         for (var i = cld + 1; i < handCardIndex.length; i++) {
             var v = handCardIndex[i];
@@ -1089,11 +1284,12 @@ var pdklogic = /** @class */ (function () {
         var lastLd = minCld;
         var ret = [];
         var foundT = [];
-        for (var i = minCld + 1; i < handCardIndex.length; i++) {
+        var minIndex = Math.min(14, handCardIndex.length);
+        for (var i = minCld + 1; i < minIndex; i++) {
             var v = handCardIndex[i];
             if (v && v.length == 2) {
                 lastLd = i;
-                for (var j = 0; j < handCardIndex.length; j++) {
+                for (var j = i + 1; j <= minIndex; j++) {
                     var v_6 = handCardIndex[j];
                     if (v_6 && v_6.length == 2) {
                         if (lastLd + 1 == j) {
@@ -1118,19 +1314,19 @@ var pdklogic = /** @class */ (function () {
                 }
             }
         }
-        for (var i = minCld + 1; i < handCardIndex.length; i++) {
+        for (var i = minCld + 1; i < minIndex; i++) {
             var v = handCardIndex[i];
-            if (v && v.length >= 2) {
+            if (v && v.length >= 2 && v.length < 4) {
                 lastLd = i;
-                for (var j = 0; j < handCardIndex.length; j++) {
+                for (var j = i + 1; j <= minIndex; j++) {
                     var v_7 = handCardIndex[j];
-                    if (v_7 && v_7.length >= 2) {
+                    if (v_7 && v_7.length >= 2 && v_7.length < 4) {
                         if (lastLd + 1 == j) {
                             lastLd = j;
                             if (j - i + 1 >= compareSeq) {
                                 var r = [];
                                 for (var m = i; m <= j; m++) {
-                                    r = r.concat(handCardIndex[m]);
+                                    r = r.concat(handCardIndex[m].slice(0, 2));
                                 }
                                 var cardkey = this.getCardKey(r);
                                 if (!foundT[cardkey]) {
@@ -1147,6 +1343,34 @@ var pdklogic = /** @class */ (function () {
                 }
             }
         }
+        // for (let i = minCld + 1; i < minIndex; i++) {
+        //     const v = handCardIndex[i];
+        //     if (v && v.length >= 2) {
+        //         lastLd = i
+        //         for (let j = i + 1; j <= minIndex; j++) {
+        //             const v = handCardIndex[j];
+        //             if (v && v.length >= 2) {
+        //                 if (lastLd + 1 == j) {
+        //                     lastLd = j
+        //                     if (j - i + 1 >= compareSeq) {
+        //                         let r = []
+        //                         for (let m = i; m <= j; m++) {
+        //                             r = r.concat(handCardIndex[m].slice(0,2))
+        //                         }
+        //                         let cardkey = this.getCardKey(r)
+        //                         if (!foundT[cardkey]) {
+        //                             foundT[cardkey] = true
+        //                             ret.push(r)
+        //                         }
+        //                         break
+        //                     }
+        //                 } else {
+        //                     break
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         return ret;
     };
     pdklogic.getCardKey = function (cards) {
@@ -1160,15 +1384,17 @@ var pdklogic = /** @class */ (function () {
         return key;
     };
     pdklogic.findAllThree = function (localHandCard, localCompare) {
-        var minCld = localCompare[0].l;
         var handCardIndex = this.dataToIndex(localHandCard);
-        var found = false;
-        var singleCnt = Math.min(localCompare.length - 3, localHandCard.length - 3);
+        var minCld = 2;
+        var singleCnt = Math.min(2, localHandCard.length - 3);
+        if (localCompare) {
+            minCld = localCompare[0].l;
+            singleCnt = Math.min(localCompare.length - 3, localHandCard.length - 3);
+        }
         var ret = [];
         for (var i = minCld + 1; i < handCardIndex.length; i++) {
             var v = handCardIndex[i];
             if (v && v.length == 3) {
-                found = true;
                 var rtn = [];
                 var needSingle = singleCnt;
                 rtn = rtn.concat(v);
@@ -1248,9 +1474,13 @@ var pdklogic = /** @class */ (function () {
         return ret;
     };
     pdklogic.findAllShunZi = function (localHandCard, localCompare) {
-        var compareLen = localCompare.length;
-        var minCld = localCompare[0].l;
         var handCardIndex = this.dataToIndex(localHandCard);
+        var compareLen = 5;
+        var minCld = 2;
+        if (localCompare) {
+            compareLen = localCompare.length;
+            minCld = localCompare[0].l;
+        }
         var lastLd = minCld;
         var ret = [];
         for (var i = minCld + 1; i < handCardIndex.length; i++) {
@@ -1414,22 +1644,22 @@ var pdklogic = /** @class */ (function () {
         }
         return ret;
     };
-    pdklogic.findAllBomb = function (localHandCard, localCompare, any) {
+    pdklogic.findAllBomb = function (localHandCard, localCompare) {
         var ret = [];
-        if (!any) {
+        if (localCompare) {
             var compareLen = localCompare.length;
             var handCardIndex = this.dataToIndex(localHandCard);
             var minCld = localCompare[0].l;
-            if (compareLen == 3) {
-                //AAA
-                for (var i = 3; i < handCardIndex.length; i++) {
-                    var v = handCardIndex[i];
-                    if (v && v.length == 4) {
-                        var rtn = [].concat(v);
-                        ret.push(rtn);
-                    }
-                }
-            }
+            // if (compareLen == 3) {
+            //     //AAA
+            //     for (let i = 3; i < handCardIndex.length; i++) {
+            //         const v = handCardIndex[i]
+            //         if (v && v.length == 4) {
+            //             let rtn = [].concat(v)
+            //             ret.push(rtn)
+            //         }
+            //     }
+            // }
             for (var i = minCld + 1; i < handCardIndex.length; i++) {
                 var v = handCardIndex[i];
                 if (v && v.length == 4) {
@@ -1440,11 +1670,11 @@ var pdklogic = /** @class */ (function () {
         }
         else {
             var handCardIndex = this.dataToIndex(localHandCard);
-            //有AAA 就返回AAA
-            if (handCardIndex[14] && handCardIndex[14].length == 3) {
-                var rtn = [].concat(handCardIndex[14]);
-                ret.push(rtn);
-            }
+            // //有AAA 就返回AAA
+            // if (handCardIndex[14] && handCardIndex[14].length == 3) {
+            //     let rtn = [].concat(handCardIndex[14])
+            //     ret.push(rtn)
+            // }
             for (var i = 3; i < handCardIndex.length; i++) {
                 var v = handCardIndex[i];
                 if (v && v.length == 4) {
@@ -1456,7 +1686,7 @@ var pdklogic = /** @class */ (function () {
         return ret;
     };
     //a是否大于b
-    pdklogic.isGt = function (a, b, nextRemainOne, last) {
+    pdklogic.isGt = function (a, b, last) {
         var at = this.getCardType(a, last);
         var bt = this.getCardType(b, last);
         var as = this.sortBySame(a, at);
@@ -1469,6 +1699,8 @@ var pdklogic = /** @class */ (function () {
                 return false;
             }
             else {
+                console.log("as:", as[0].l);
+                console.log("bs:", bs[0].l);
                 if (as[0].l == 0x0F) {
                     return true;
                 }
@@ -1490,7 +1722,6 @@ var pdklogic = /** @class */ (function () {
     pdklogic.getOneAICard = function (localHandCard, selectCard, findFit) {
         var selectLen = selectCard.length;
         var handCardLen = localHandCard.length;
-        console.log("selectLen:", selectLen, ",handCardLen:", handCardLen);
         if (selectLen == 1) {
             return selectCard;
         }
@@ -1501,8 +1732,6 @@ var pdklogic = /** @class */ (function () {
         }
         var sc = this.sortBySame(selectCard);
         var st = this.getCardType(sc);
-        console.log(sc);
-        console.log("st:" + st);
         if (st > CT.Error) {
             return selectCard;
         }
@@ -1519,14 +1748,10 @@ var pdklogic = /** @class */ (function () {
         }
         if (selectLen == 3) {
             //连对
-            console.log(selSameCard[2]);
-            console.log(selSameCard[1]);
             if (selSameCard[2] && selSameCard[1] && Math.abs(selSameCard[2][0][0].l - selSameCard[1][0][0].l) == 1) {
-                console.log("aaa");
                 var rtn = [];
                 rtn = rtn.concat(selectCard);
                 var handCardIndex = this.dataToIndex(localHandCard);
-                console.log(handCardIndex[selSameCard[1][0][0].l]);
                 if (handCardIndex[selSameCard[1][0][0].l]) {
                     for (var i = 0; i < handCardIndex[selSameCard[1][0][0].l].length; i++) {
                         var v = handCardIndex[selSameCard[1][0][0].l][i];
@@ -1536,7 +1761,12 @@ var pdklogic = /** @class */ (function () {
                         }
                     }
                 }
-                return rtn;
+                if (this.getCardType(rtn) == CT.DoubleSeq) {
+                    //连对
+                    return rtn;
+                }
+                //对子
+                return selSameCard[2][0];
             }
             //3带2
             if (selSameCard[3]) {
@@ -1604,6 +1834,7 @@ var pdklogic = /** @class */ (function () {
         }
     };
     pdklogic.findAIShunZi = function (localHandCard, selectCard) {
+        this.sortByLogicData(selectCard);
     };
     pdklogic.isCardValid = function (cards, last) {
         var cardLen = cards.length;
@@ -1633,6 +1864,90 @@ var pdklogic = /** @class */ (function () {
             return true;
         }
         return false;
+    };
+    pdklogic.findAllGtCom = function (localHandCard, localCompare, bHoldDown) {
+        localCompare = this.sortBySame(localCompare);
+        var allBomb = this.findAllBomb(localHandCard, localCompare);
+        var cardType = this.getCardType(localCompare);
+        console.log("传入牌型：", CT[cardType]);
+        if (cardType == CT.Single) {
+            var ret = this.findAllSingle(localHandCard, localCompare, bHoldDown);
+            if (allBomb && allBomb.length > 0) {
+                ret = ret.concat(allBomb);
+            }
+            return ret;
+        }
+        else if (cardType == CT.Double) {
+            var ret = this.findAllDouble(localHandCard, localCompare);
+            if (allBomb && allBomb.length > 0) {
+                ret = ret.concat(allBomb);
+            }
+            return ret;
+        }
+        else if (cardType == CT.DoubleSeq) {
+            var ret = this.findAllDoubleSeq(localHandCard, localCompare);
+            if (allBomb && allBomb.length > 0) {
+                ret = ret.concat(allBomb);
+            }
+            return ret;
+        }
+        else if (cardType == CT.Three) {
+            var ret = this.findAllThree(localHandCard, localCompare);
+            if (allBomb && allBomb.length > 0) {
+                ret = ret.concat(allBomb);
+            }
+            return ret;
+        }
+        else if (cardType == CT.FourAThree) {
+            var ret = this.findAllFourThree(localHandCard, localCompare);
+            if (allBomb && allBomb.length > 0) {
+                ret = ret.concat(allBomb);
+            }
+            return ret;
+        }
+        else if (cardType == CT.ShunZi) {
+            var ret = this.findAllShunZi(localHandCard, localCompare);
+            if (allBomb && allBomb.length > 0) {
+                ret = ret.concat(allBomb);
+            }
+            return ret;
+        }
+        else if (cardType == CT.AirPlane) {
+            var ret = this.findAllPlane(localHandCard, localCompare);
+            if (allBomb && allBomb.length > 0) {
+                ret = ret.concat(allBomb);
+            }
+            return ret;
+        }
+        else if (cardType == CT.Bomb) {
+            return this.findAllBomb(localHandCard, localCompare);
+        }
+    };
+    pdklogic.clone = function (obj) {
+        if (!obj || [] == obj || {} == obj) {
+            return obj;
+        }
+        var newObj;
+        var isArray = false;
+        if (Array.isArray(obj)) {
+            newObj = [];
+            isArray = true;
+        }
+        else {
+            newObj = {};
+            isArray = false;
+        }
+        for (var _i = 0, _a = Object.keys(obj); _i < _a.length; _i++) {
+            var key = _a[_i];
+            if (null == obj[key]) {
+                newObj[key] = null;
+            }
+            else {
+                var sub = (typeof obj[key] == 'object') ? this.clone(obj[key]) : obj[key];
+                newObj[key] = sub;
+            }
+        }
+        return newObj;
     };
     return pdklogic;
 }());
