@@ -40,18 +40,41 @@ function test_a(r, expect){
 //     0x03, 0x04, 0x25, 0x06,0x17,0x28,  0x09, 0x0a,0x0b, 0x2c, 0x0d,
 //     0x17, 0x28,0x09,0x1a,0x3b]);
 
-var localHandCard = pdklogic.bytesToLCard([
-        0x03, 0x04, 0x25, 0x06,0x17,0x28,  0x09,
-        0x17, 0x28,0x09,0x1a, 0x0b]);
 
+
+var localHandCard = pdklogic.bytesToLCard([
+    14, 46,29,45,28,11,27,59,42,57,8,39,55,6,37,36]);
+var localCompare = pdklogic.bytesToLCard([
+    0x03,0x04,0x05,0x06,0x07], true, true);
 // let rtn = pdklogic.findOneDoubleSeq(localHandCard)
 // console.log(rtn)
-
-// let rtn = pdklogic.findAllThree(localHandCard)
+console.log("------------------")
+// let rtn = pdklogic.findAllThree(localHandCard, localCompare)
 // console.log(rtn)
 
-// rtn = pdklogic.findAllDoubleSeq(localHandCard, pdklogic.bytesToLCard([0x13, 0x23, 0x04,0x14]))
-// console.log(rtn)
+// let gt = pdklogic.isGt(localHandCard, localCompare, false)
+
+// let same = pdklogic.sortBySame(localCompare)
+// console.log("same:", same)
+
+// let planes = pdklogic.findPlaneBody(localHandCard)
+// console.log("planes:", planes)
+// console.log("planes[0]", planes[0])
+
+// let seqs = pdklogic.findDoubleSeqBody(localCompare)
+// console.log("seqs:", seqs)
+
+// // console.log(seqs.splice(seqs.length - 2, 2))
+// let bombs = pdklogic.findAllBomb(localHandCard)
+// localCompare = pdklogic.bytesToLCard([
+//     0x05,0x06,0x07,0x17], true, true);
+
+// let sz = pdklogic.findOneShunZi(localHandCard, localCompare)
+// console.log(sz)
+
+
+let rtn = pdklogic.findAllDoubleSeq(localHandCard, pdklogic.bytesToLCard([13, 61, 44,60]))
+console.log(rtn)
 
 
 
@@ -62,13 +85,13 @@ var localHandCard = pdklogic.bytesToLCard([
 // // pdklogic.deleteRtn(localHandCard, rtn)
 // // console.log(localHandCard)
 
-let ret = pdklogic.findFirstTipShunZi(localHandCard)
+// let ret = pdklogic.findFirstTipShunZi(localHandCard)
 
-for (let i = 0; i < ret.length; i++) {
-    const element = ret[i];
-    console.log("------------")
-    console.log(element)
-}
+// for (let i = 0; i < ret.length; i++) {
+//     const element = ret[i];
+//     console.log("------------")
+//     console.log(element)
+// }
 
 // pdklogic.deleteRtn1(localHandCard, rtn)
 // log(localHandCard)
@@ -99,9 +122,30 @@ for (let i = 0; i < ret.length; i++) {
 // test_a(f, true)
 // f = pdklogic.isAirplane(pdklogic.bytesToLCard([0x03,0x13,0x23, 0x04,0x14,0x24,0x08, 0x05,0x06]), true)
 // test_a(f, true)
-let f = pdklogic.isAirplane(pdklogic.bytesToLCard([0x03,0x13,0x23, 0x04,0x14,0x24,0x15, 0x25,0x35,0x06]))
-test_a(f, true)
-console.log("isAirplane", f)
+// let f = pdklogic.isAirplane(pdklogic.bytesToLCard([0x03,0x13,0x23, 0x04,0x14,0x24,0x15, 0x25,0x35,0x06]))
+// test_a(f, true)
+// console.log("isAirplane", f)
+
+// ret = pdklogic.findLastTipCard(pdklogic.bytesToLCard([0x03,0x13,0x28,
+//      0x04,0x14,0x24, 
+//      0x25,0x35,0x05
+//      ,0x06,0x16,0x26,
+//     0x17,0x27,0x07,0x08,0x09,0x29, 0x19,0x1a,0x2a,0x1b,0x1c,0x1d,0xe]),pdklogic.bytesToLCard([0x14, 0x24, 0x03,0x13]))
+
+//     console.log("ret:", ret)
+    // ret = []
+//     ret[0] = pdklogic.bytesToLCard([0x03,0x13,0x04,0x14])
+//     ret[1] = pdklogic.bytesToLCard([0x05,0x15,0x04,0x14])
+//     ret[1] = pdklogic.bytesToLCard([0x06,0x16,0x05,0x16])
+//     console.log("------------")
+//     console.log(ret)
+// pdklogic.sortRetDesc(ret)
+
+// console.log(ret)
+
+//     console.log(ret[0].splice(ret[0].length - 3, 3))
+
+//     console.log(ret[0])
 // f = pdklogic.isAirplane(pdklogic.bytesToLCard([0x03,0x13,0x26,0x04,0x14,0x24,0x04,0x33]), true)
 // test_a(f, true)
 // console.log("isAirplane.2", f)
